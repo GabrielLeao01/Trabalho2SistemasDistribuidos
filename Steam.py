@@ -58,7 +58,7 @@ def efetiva_compra(msg):
     signature_hex = signature.hex()
     payload = json.dumps({"message": msg, "signature": signature_hex})
     
-    channel.basic_publish(exchange='direct_loja', routing_key='venda', body=payload)
+    channel.basic_publish(exchange='direct_loja', routing_key='envio', body=payload)
 
 
 consome_compra()

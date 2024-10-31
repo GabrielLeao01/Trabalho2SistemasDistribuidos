@@ -48,7 +48,7 @@ enviarEvento()
 result = channel.queue_declare('', exclusive=True)
 queue_name = result.method.queue
 
-binding_keys = ['venda']
+binding_keys = ['envio']
 for binding_key in binding_keys:
     channel.queue_bind(exchange='direct_loja', queue=queue_name, routing_key=binding_key)
 
