@@ -17,10 +17,10 @@ dados_do_jogo = {
 
 key = RSA.generate(1024)
 private_key = key.export_key(format='PEM')
-with open('private_key.pem', 'wb') as f:
+with open('cprivate_key.pem', 'wb') as f:
     f.write(private_key)
 public_key = key.publickey().export_key(format='PEM')
-with open('public_key.pem', 'wb') as f:
+with open('cpublic_key.pem', 'wb') as f:
     f.write(public_key)
 
 dados_json = json.dumps(dados_do_jogo)
@@ -35,7 +35,7 @@ message = 'Hello world'
 
 def enviarEvento():
     print(dados_do_jogo)
-    private_key = RSA.import_key(open('private_key.pem').read())
+    private_key = RSA.import_key(open('cprivate_key.pem').read())
     hash_msg = SHA256.new(json.dumps(dados_do_jogo).encode('utf-8'))
     signature = pkcs1_15.new(private_key).sign(hash_msg)
     payload = json.dumps({"message": dados_do_jogo, "signature": signature.hex()})
@@ -56,11 +56,10 @@ print(' [*] Waiting for logs. To exit press CTRL+C')
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
-    print(data)
     message = data['message'].encode('utf-8')
     print(f"Muito obrigado, sua compra foi aprovada, dados de compra:\n {json.dumps(data['message'])}")
     signature = bytes.fromhex(data["signature"])
-    key = RSA.import_key(open('public_key.pem').read())
+    key = RSA.import_key(open('spublic_key.pem').read())
     hash_msg = SHA256.new(message)
     try:
         pkcs1_15.new(key).verify(hash_msg, signature)

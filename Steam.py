@@ -14,6 +14,14 @@ def consome_compra():
     result = channel.queue_declare('', exclusive=True)
     queue_name = result.method.queue
 
+    key = RSA.generate(1024)
+    private_key = key.export_key(format='PEM')
+    with open('sprivate_key.pem', 'wb') as f:
+        f.write(private_key)
+    public_key = key.publickey().export_key(format='PEM')
+    with open('spublic_key.pem', 'wb') as f:
+        f.write(public_key)
+
     binding_keys = ['compra']
     for binding_key in binding_keys:
         channel.queue_bind(exchange='direct_loja', queue=queue_name, routing_key=binding_key)
@@ -26,13 +34,12 @@ def consome_compra():
         message = json.dumps(message_dict) 
     
         signature = bytes.fromhex(data["signature"])
-        key = RSA.import_key(open('public_key.pem').read())
+        key = RSA.import_key(open('cpublic_key.pem').read())
         hash_msg = SHA256.new(message.encode('utf-8'))
         try:
             pkcs1_15.new(key).verify(hash_msg, signature)
             print("The signature is valid.")
             message_str = message
-            print(f" [x] {method.routing_key}:{message_str}")
             channel.stop_consuming()
             efetiva_compra(message)
         except (ValueError, TypeError):
@@ -50,14 +57,12 @@ def efetiva_compra(msg):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
     channel.exchange_declare(exchange='direct_loja', exchange_type='direct')
-    print(msg)
     #msg = "Compra realizada com sucesso, seu jogo esta na biblioteca"
-    private_key = RSA.import_key(open('private_key.pem').read())
+    private_key = RSA.import_key(open('sprivate_key.pem').read())
     hash_msg = SHA256.new(msg.encode('utf-8'))
     signature = pkcs1_15.new(private_key).sign(hash_msg)
     signature_hex = signature.hex()
     payload = json.dumps({"message": msg, "signature": signature_hex})
-    
     channel.basic_publish(exchange='direct_loja', routing_key='envio', body=payload)
 
 
